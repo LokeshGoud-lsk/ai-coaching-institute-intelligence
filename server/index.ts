@@ -67,7 +67,7 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Start listener when executed directly
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5005;
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`EduTrack API Server running on port ${PORT}`);
