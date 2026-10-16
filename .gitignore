@@ -45,3 +45,6 @@ uploads/
 
 # Vercel
 .vercel
+
+.vercel
+.env*
