@@ -8,21 +8,100 @@ import { calculateBalancePaise, determineInvoiceStatus } from '../../src/lib/fee
 const router = Router();
 
 // Initialize Razorpay instance if environment variables exist
-const razorpayKeyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_ApexDemoKey';
-const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || 'rzp_secret_ApexDemoSecret';
-const razorpayWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_webhook_secret';
+let razorpayKeyId = process.env.RAZORPAY_KEY_ID || 'rzp_test_ApexDemoKey';
+let razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || 'rzp_secret_ApexDemoSecret';
+let razorpayWebhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET || 'rzp_webhook_secret';
 
 let razorpayClient: Razorpay | null = null;
-try {
-  if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
-    razorpayClient = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+function initRazorpayClient() {
+  if (razorpayKeyId && razorpayKeySecret && !razorpayKeyId.includes('ApexDemoKey')) {
+    try {
+      razorpayClient = new Razorpay({
+        key_id: razorpayKeyId,
+        key_secret: razorpayKeySecret,
+      });
+      console.log('[Razorpay]: Initialized Razorpay client with key:', razorpayKeyId);
+    } catch (e) {
+      console.warn('[Razorpay]: Client init error:', e);
+      razorpayClient = null;
+    }
+  } else {
+    razorpayClient = null;
+  }
+}
+initRazorpayClient();
+
+// GET /api/v1/payments/gateway-info - Get current gateway status
+router.get('/gateway-info', (req: Request, res: Response) => {
+  const isReal = Boolean(razorpayClient);
+  return res.json({
+    configured: isReal,
+    mode: isReal ? (razorpayKeyId.startsWith('rzp_live_') ? 'LIVE' : 'TEST') : 'DEMO_TEST',
+    keyId: razorpayKeyId ? `${razorpayKeyId.slice(0, 8)}...${razorpayKeyId.slice(-4)}` : null,
+    fullKeyIdForCheckout: razorpayKeyId,
+    currency: 'INR',
+    webhookConfigured: Boolean(razorpayWebhookSecret && !razorpayWebhookSecret.includes('rzp_webhook_secret')),
+    signatureVerification: 'HMAC-SHA256 Server-Enforced',
+  });
+});
+
+// POST /api/v1/payments/configure - Set Razorpay Keys dynamically
+router.post('/configure', (req: Request, res: Response) => {
+  const { keyId, keySecret, webhookSecret } = req.body;
+
+  if (!keyId || !keySecret) {
+    return res.status(400).json({ error: 'Key ID and Key Secret are required.' });
+  }
+
+  razorpayKeyId = keyId.trim();
+  razorpayKeySecret = keySecret.trim();
+  if (webhookSecret) {
+    razorpayWebhookSecret = webhookSecret.trim();
+  }
+
+  process.env.RAZORPAY_KEY_ID = razorpayKeyId;
+  process.env.RAZORPAY_KEY_SECRET = razorpayKeySecret;
+  if (webhookSecret) {
+    process.env.RAZORPAY_WEBHOOK_SECRET = razorpayWebhookSecret;
+  }
+
+  initRazorpayClient();
+
+  store.logAudit('PAYMENT_GATEWAY_CREDENTIALS_UPDATED', 'PAYMENT', {
+    keyPrefix: razorpayKeyId.slice(0, 8),
+    hasClient: Boolean(razorpayClient),
+  });
+
+  return res.json({
+    message: 'Razorpay payment gateway configured successfully.',
+    configured: Boolean(razorpayClient),
+    mode: razorpayKeyId.startsWith('rzp_live_') ? 'LIVE' : 'TEST',
+  });
+});
+
+// POST /api/v1/payments/test-connection - Test Razorpay API credentials
+router.post('/test-connection', async (req: Request, res: Response) => {
+  if (!razorpayClient) {
+    return res.status(400).json({
+      success: false,
+      error: 'Razorpay client is not configured with valid API keys. Please configure Key ID and Key Secret first.',
     });
   }
-} catch (e) {
-  console.warn('Razorpay client init warning:', e);
-}
+
+  try {
+    const orders = await razorpayClient.orders.all({ count: 1 });
+    return res.json({
+      success: true,
+      message: 'Razorpay API credentials verified successfully! Test connection active.',
+      count: orders.items?.length || 0,
+    });
+  } catch (err: any) {
+    return res.status(400).json({
+      success: false,
+      error: err.error?.description || err.message || 'Razorpay authentication failed.',
+    });
+  }
+});
 
 // POST /api/v1/payments/create-order - Create Razorpay order
 router.post('/create-order', async (req: Request, res: Response) => {

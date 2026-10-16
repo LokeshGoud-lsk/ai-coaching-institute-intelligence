@@ -14,12 +14,15 @@ import {
   CheckCircle,
   Clock,
   ShieldAlert,
+  Download,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { Student, AttendanceRecord, Invoice, Payment } from '../types';
 import { RiskBadge, AttendanceBadge, InvoiceStatusBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { formatPaiseToINR } from '../lib/feeCalculations';
+import { generatePaymentReceiptPDF } from '../lib/pdfGenerator';
+import { PaymentCheckoutModal } from '../components/payments/PaymentCheckoutModal';
 
 export const StudentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,6 +36,7 @@ export const StudentDetailPage: React.FC = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [aiDraft, setAiDraft] = useState<{ subject: string; body: string } | null>(null);
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -321,6 +325,127 @@ export const StudentDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Fee Ledger & Invoices Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Invoices */}
+        <div className="glass-card p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              <FileText className="w-4 h-4 text-emerald-400" />
+              Fee Invoices & Outstanding Due
+            </h3>
+            <span className="text-xs text-slate-400">{invoices.length} Invoices</span>
+          </div>
+
+          <div className="space-y-3">
+            {invoices.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6">No fee invoices assigned.</p>
+            ) : (
+              invoices.map(inv => (
+                <div
+                  key={inv.id}
+                  className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 space-y-2 text-xs"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-mono font-bold text-white text-sm">{inv.invoiceNumber}</span>
+                      <span className="text-[10px] text-slate-400 block">Due Date: {inv.dueDate}</span>
+                    </div>
+                    <InvoiceStatusBadge status={inv.status} />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-white/5">
+                    <div>
+                      <span className="text-[10px] text-slate-400 block">Balance Due</span>
+                      <span className="font-bold text-rose-400">{formatPaiseToINR(inv.balancePaise)}</span>
+                    </div>
+
+                    {inv.balancePaise > 0 && (
+                      <Button
+                        size="sm"
+                        variant="gradient"
+                        leftIcon={<CreditCard className="w-3.5 h-3.5" />}
+                        onClick={() => setSelectedInvoiceForPayment(inv)}
+                      >
+                        Pay via Razorpay
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Payments History */}
+        <div className="glass-card p-5 space-y-4">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3">
+            <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-brand-400" />
+              Verified Payment Receipts
+            </h3>
+            <span className="text-xs text-slate-400">{payments.length} Transactions</span>
+          </div>
+
+          <div className="space-y-3">
+            {payments.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-6">No payments recorded yet.</p>
+            ) : (
+              payments.map(pay => (
+                <div
+                  key={pay.id}
+                  className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 flex items-center justify-between text-xs"
+                >
+                  <div>
+                    <span className="font-mono font-bold text-white block">{pay.receiptNumber}</span>
+                    <span className="text-[10px] text-slate-400">
+                      {new Date(pay.paidAt).toLocaleDateString()} | {pay.paymentMethod}
+                    </span>
+                  </div>
+                  <div className="text-right flex items-center gap-3">
+                    <div>
+                      <span className="font-bold text-emerald-400 block">{formatPaiseToINR(pay.amountPaise)}</span>
+                      <span className="text-[9px] text-emerald-500/80 font-mono">VERIFIED</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        generatePaymentReceiptPDF({
+                          receiptNumber: pay.receiptNumber,
+                          studentName: student.fullName,
+                          studentCode: student.studentCode,
+                          amountPaise: pay.amountPaise,
+                          paymentMethod: pay.paymentMethod,
+                          paidAt: pay.paidAt,
+                          transactionRef: pay.transactionRef,
+                          invoiceNumber: pay.invoiceNumber,
+                        })
+                      }
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-400 hover:text-white" />
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Payment Checkout Modal */}
+      <PaymentCheckoutModal
+        isOpen={Boolean(selectedInvoiceForPayment)}
+        onClose={() => setSelectedInvoiceForPayment(null)}
+        invoice={selectedInvoiceForPayment}
+        onSuccess={() => {
+          setSelectedInvoiceForPayment(null);
+          if (id) {
+            api.getStudentById(id).then(setData).catch(console.error);
+          }
+        }}
+      />
     </div>
   );
 };

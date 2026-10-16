@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Settings, Save, CheckCircle2, ShieldCheck, Key, Database, Building2 } from 'lucide-react';
+import { Settings, Save, CheckCircle2, ShieldCheck, Key, Database, Building2, CreditCard, AlertCircle, ExternalLink } from 'lucide-react';
 import { api } from '../lib/api';
 import { Institute } from '../types';
 import { Button } from '../components/common/Button';
@@ -19,6 +19,14 @@ export const SettingsPage: React.FC = () => {
     contactPhone: '',
     address: '',
   });
+  const [gatewayData, setGatewayData] = useState({
+    keyId: '',
+    keySecret: '',
+    webhookSecret: '',
+  });
+  const [gatewayStatus, setGatewayStatus] = useState<any>(null);
+  const [isTestingGateway, setIsTestingGateway] = useState(false);
+  const [gatewayFeedback, setGatewayFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
@@ -26,8 +34,12 @@ export const SettingsPage: React.FC = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await api.getSettings();
+        const [res, gwInfo] = await Promise.all([
+          api.getSettings(),
+          api.getGatewayInfo().catch(() => null),
+        ]);
         setSettings(res);
+        setGatewayStatus(gwInfo);
         setFormData({
           name: res.institute.name,
           minAttendance: res.institute.minAttendance,
@@ -44,6 +56,32 @@ export const SettingsPage: React.FC = () => {
     };
     load();
   }, []);
+
+  const handleSaveGateway = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGatewayFeedback(null);
+    try {
+      const res = await api.configurePaymentGateway(gatewayData);
+      setGatewayFeedback({ type: 'success', message: `${res.message} Gateway Mode: ${res.mode}` });
+      const refreshed = await api.getGatewayInfo();
+      setGatewayStatus(refreshed);
+    } catch (err: any) {
+      setGatewayFeedback({ type: 'error', message: err.message || 'Failed to configure Razorpay gateway' });
+    }
+  };
+
+  const handleTestConnection = async () => {
+    setIsTestingGateway(true);
+    setGatewayFeedback(null);
+    try {
+      const res = await api.testGatewayConnection();
+      setGatewayFeedback({ type: 'success', message: res.message });
+    } catch (err: any) {
+      setGatewayFeedback({ type: 'error', message: err.message || 'Connection test failed' });
+    } finally {
+      setIsTestingGateway(false);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +154,133 @@ export const SettingsPage: React.FC = () => {
             <span className="text-[10px] text-brand-300">Strict database grounding enforced</span>
           </div>
         </div>
+      </div>
+
+      {/* Razorpay Payment Gateway Configuration Card */}
+      <div className="glass-card p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-white/10 pb-3">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-emerald-400" />
+            <div>
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                Razorpay Payment Gateway Setup & Credentials
+              </h3>
+              <p className="text-[11px] text-slate-400">
+                Connect your Razorpay account to accept live UPI, debit/credit cards, and NetBanking payments
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span
+              className={`px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase ${
+                gatewayStatus?.configured
+                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
+                  : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+              }`}
+            >
+              {gatewayStatus?.mode || 'DEMO_TEST'}
+            </span>
+          </div>
+        </div>
+
+        {gatewayFeedback && (
+          <div
+            className={`p-3.5 rounded-xl border text-xs flex items-center gap-2 ${
+              gatewayFeedback.type === 'success'
+                ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
+                : 'bg-rose-950/60 border-rose-500/40 text-rose-300'
+            }`}
+          >
+            {gatewayFeedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+            )}
+            <span>{gatewayFeedback.message}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveGateway} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Razorpay Key ID
+              </label>
+              <input
+                type="text"
+                placeholder={gatewayStatus?.keyId ? `Active: ${gatewayStatus.keyId}` : 'e.g. rzp_test_YourTestKeyId'}
+                value={gatewayData.keyId}
+                onChange={e => setGatewayData({ ...gatewayData, keyId: e.target.value })}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Found in Razorpay Dashboard &gt; Settings &gt; API Keys
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1">
+                Razorpay Key Secret
+              </label>
+              <input
+                type="password"
+                placeholder="Enter Razorpay Key Secret"
+                value={gatewayData.keySecret}
+                onChange={e => setGatewayData({ ...gatewayData, keySecret: e.target.value })}
+                className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono"
+              />
+              <span className="text-[10px] text-slate-400 mt-1 block">
+                Stored securely on backend and used for HMAC-SHA256 signature verification
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-300 mb-1">
+              Razorpay Webhook Secret (Optional)
+            </label>
+            <input
+              type="password"
+              placeholder="Enter Webhook Secret (for async payment confirmation)"
+              value={gatewayData.webhookSecret}
+              onChange={e => setGatewayData({ ...gatewayData, webhookSecret: e.target.value })}
+              className="w-full bg-slate-900 border border-white/10 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono"
+            />
+          </div>
+
+          {/* Webhook Endpoint Info */}
+          <div className="p-3.5 rounded-xl bg-slate-900/60 border border-white/5 space-y-1.5 text-xs">
+            <span className="text-slate-400 block font-semibold text-[11px]">Webhook Endpoint URL (Copy for Razorpay Dashboard):</span>
+            <div className="flex items-center justify-between p-2 rounded-lg bg-black/40 border border-white/5 font-mono text-[11px] text-emerald-400 break-all">
+              <span>https://ai-coaching-institute-intelligence.vercel.app/api/v1/payments/webhook</span>
+            </div>
+            <span className="text-[10px] text-slate-500 block">
+              Subscribe to events: <code className="text-slate-400">payment.captured</code>, <code className="text-slate-400">payment.failed</code>, <code className="text-slate-400">order.paid</code>
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              isLoading={isTestingGateway}
+              onClick={handleTestConnection}
+            >
+              Test API Connection
+            </Button>
+
+            <Button
+              type="submit"
+              variant="gradient"
+              size="sm"
+              leftIcon={<Save className="w-4 h-4" />}
+            >
+              Save Gateway Keys
+            </Button>
+          </div>
+        </form>
       </div>
 
       {/* Institute Configuration Form */}

@@ -13,6 +13,7 @@ import { api } from '../lib/api';
 import { Invoice } from '../types';
 import { Button } from '../components/common/Button';
 import { StatCard } from '../components/common/StatCard';
+import { PaymentCheckoutModal } from '../components/payments/PaymentCheckoutModal';
 import { formatPaiseToINR } from '../lib/feeCalculations';
 import { exportToCSV } from '../lib/utils';
 
@@ -25,6 +26,7 @@ export const OverdueFeesPage: React.FC = () => {
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [aiDraftMessage, setAiDraftMessage] = useState<string | null>(null);
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null);
 
   const fetchData = async () => {
     try {
@@ -202,11 +204,14 @@ export const OverdueFeesPage: React.FC = () => {
                       >
                         Draft Reminder
                       </Button>
-                      <Link to="/fees/payments">
-                        <Button size="sm" variant="gradient">
-                          Settle
-                        </Button>
-                      </Link>
+                      <Button
+                        size="sm"
+                        variant="gradient"
+                        leftIcon={<CreditCard className="w-3.5 h-3.5" />}
+                        onClick={() => setSelectedInvoiceForPayment(inv)}
+                      >
+                        Settle via Razorpay
+                      </Button>
                     </div>
                   </td>
                 </tr>
@@ -215,6 +220,17 @@ export const OverdueFeesPage: React.FC = () => {
           </table>
         </div>
       </div>
+
+      {/* Razorpay Payment Checkout Modal */}
+      <PaymentCheckoutModal
+        isOpen={Boolean(selectedInvoiceForPayment)}
+        onClose={() => setSelectedInvoiceForPayment(null)}
+        invoice={selectedInvoiceForPayment}
+        onSuccess={() => {
+          setSelectedInvoiceForPayment(null);
+          fetchData();
+        }}
+      />
     </div>
   );
 };

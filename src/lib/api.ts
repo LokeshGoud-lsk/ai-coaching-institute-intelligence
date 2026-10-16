@@ -175,6 +175,25 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getPaymentHistory: () => request<Payment[]>('/payments/history'),
+  getGatewayInfo: () =>
+    request<{
+      configured: boolean;
+      mode: string;
+      keyId: string | null;
+      fullKeyIdForCheckout: string;
+      currency: string;
+      webhookConfigured: boolean;
+      signatureVerification: string;
+    }>('/payments/gateway-info'),
+  configurePaymentGateway: (payload: { keyId: string; keySecret: string; webhookSecret?: string }) =>
+    request<{ message: string; configured: boolean; mode: string }>('/payments/configure', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  testGatewayConnection: () =>
+    request<{ success: boolean; message: string; count?: number }>('/payments/test-connection', {
+      method: 'POST',
+    }),
 
   // AI Assistant (Gemini)
   askAIChat: (message: string) =>
