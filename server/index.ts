@@ -17,6 +17,7 @@ import notificationRoutes from './routes/notifications';
 import batchRoutes from './routes/batches';
 import facultyRoutes from './routes/faculty';
 import settingsRoutes from './routes/settings';
+import { checkDatabaseConnection, isDatabaseConnected } from './db';
 
 export const app = express();
 
@@ -31,12 +32,18 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Health check endpoint
-app.get('/api/health', (req: Request, res: Response) => {
+app.get('/api/health', async (req: Request, res: Response) => {
+  const dbStatus = await checkDatabaseConnection();
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     service: 'AI Coaching Institute Intelligence API',
     version: '1.0.0',
+    database: {
+      connected: dbStatus.connected,
+      message: dbStatus.message,
+      provider: 'postgresql',
+    },
     env: process.env.NODE_ENV || 'development',
   });
 });
@@ -69,9 +76,11 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // Start listener when executed directly
 const PORT = process.env.PORT || 5005;
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  app.listen(PORT, () => {
+  app.listen(PORT, async () => {
     console.log(`EduTrack API Server running on port ${PORT}`);
     console.log(`Base URL: http://localhost:${PORT}/api/v1`);
+    const dbStatus = await checkDatabaseConnection();
+    console.log(`[Database Status]: ${dbStatus.message}`);
   });
 }
 

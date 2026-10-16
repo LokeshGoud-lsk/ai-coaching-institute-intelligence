@@ -38,6 +38,33 @@ export const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['warn', 'error'] : ['error'],
 });
 
+export let isDatabaseConnected = false;
+
+export async function checkDatabaseConnection(): Promise<{ connected: boolean; message: string }> {
+  if (!process.env.DATABASE_URL) {
+    isDatabaseConnected = false;
+    return {
+      connected: false,
+      message: 'DATABASE_URL is not configured in .env. Running on seeded repository store.',
+    };
+  }
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    isDatabaseConnected = true;
+    return {
+      connected: true,
+      message: 'Successfully connected to PostgreSQL database via Prisma ORM.',
+    };
+  } catch (error: any) {
+    isDatabaseConnected = false;
+    return {
+      connected: false,
+      message: `PostgreSQL connection error: ${error.message || error}`,
+    };
+  }
+}
+
 export class DataStore {
   institute: Institute = { ...SEED_INSTITUTE };
   users: UserProfile[] = [...SEED_USERS];
