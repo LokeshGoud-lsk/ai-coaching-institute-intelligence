@@ -14,6 +14,7 @@ import {
   calculateAssessmentHabitRiskPoints,
   evaluateStudentRisk,
 } from '../src/lib/earlyWarningEngine';
+import { hashPassword, verifyPassword, store } from '../server/db';
 
 describe('Deterministic Financial Arithmetic (Integer Paise)', () => {
   it('correctly converts integer paise to formatted INR currency string', () => {
@@ -168,3 +169,40 @@ describe('Razorpay HMAC-SHA256 Cryptographic Verification', () => {
     expect(checkSignature).not.toBe(tamperedSignature);
   });
 });
+
+describe('Database Authentication & Credential Security', () => {
+  it('hashes passwords with PBKDF2 and random salt deterministically', () => {
+    const password = 'SuperSecretInstitute2026!';
+    const creds1 = hashPassword(password);
+    expect(creds1.hash).toBeDefined();
+    expect(creds1.salt).toBeDefined();
+    expect(creds1.hash.length).toBe(128); // 64 bytes hex
+    expect(creds1.salt.length).toBe(32); // 16 bytes hex
+
+    // Unique salts generate different hashes
+    const creds2 = hashPassword(password);
+    expect(creds2.salt).not.toBe(creds1.salt);
+    expect(creds2.hash).not.toBe(creds1.hash);
+  });
+
+  it('verifies correct password against stored hash and salt', () => {
+    const password = 'CorrectPassword123#';
+    const { hash, salt } = hashPassword(password);
+
+    expect(verifyPassword(password, hash, salt)).toBe(true);
+  });
+
+  it('rejects incorrect password against stored hash and salt', () => {
+    const password = 'CorrectPassword123#';
+    const { hash, salt } = hashPassword(password);
+
+    expect(verifyPassword('WrongPassword123#', hash, salt)).toBe(false);
+    expect(verifyPassword('', hash, salt)).toBe(false);
+  });
+
+  it('verifies demo users credentials in store', () => {
+    expect(store.verifyUserPassword('admin@apexacademy.edu.in', 'ApexSecureDemo2026!')).toBe(true);
+    expect(store.verifyUserPassword('admin@apexacademy.edu.in', 'IncorrectPassword!')).toBe(false);
+  });
+});
+

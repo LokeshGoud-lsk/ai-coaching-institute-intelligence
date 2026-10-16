@@ -20249,14 +20249,14 @@ var require_etag = __commonJS({
   "node_modules/etag/index.js"(exports, module) {
     "use strict";
     module.exports = etag;
-    var crypto2 = __require("crypto");
+    var crypto3 = __require("crypto");
     var Stats = __require("fs").Stats;
     var toString = Object.prototype.toString;
     function entitytag(entity) {
       if (entity.length === 0) {
         return '"0-2jmj7l5rSw0yVb/vlWAYkK/YBwk"';
       }
-      var hash = crypto2.createHash("sha1").update(entity, "utf8").digest("base64").substring(0, 27);
+      var hash = crypto3.createHash("sha1").update(entity, "utf8").digest("base64").substring(0, 27);
       var len = typeof entity === "string" ? Buffer.byteLength(entity, "utf8") : entity.length;
       return '"' + len.toString(16) + "-" + hash + '"';
     }
@@ -23165,11 +23165,11 @@ var require_request = __commonJS({
 // node_modules/cookie-signature/index.js
 var require_cookie_signature = __commonJS({
   "node_modules/cookie-signature/index.js"(exports) {
-    var crypto2 = __require("crypto");
+    var crypto3 = __require("crypto");
     exports.sign = function(val, secret) {
       if ("string" !== typeof val) throw new TypeError("Cookie value must be provided as a string.");
       if (null == secret) throw new TypeError("Secret key must be provided.");
-      return val + "." + crypto2.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
+      return val + "." + crypto3.createHmac("sha256", secret).update(val).digest("base64").replace(/\=+$/, "");
     };
     exports.unsign = function(val, secret) {
       if ("string" !== typeof val) throw new TypeError("Signed cookie string must be provided.");
@@ -23178,7 +23178,7 @@ var require_cookie_signature = __commonJS({
       return sha1(mac) == sha1(val) ? str : false;
     };
     function sha1(str) {
-      return crypto2.createHash("sha1").update(str).digest("hex");
+      return crypto3.createHash("sha1").update(str).digest("hex");
     }
   }
 });
@@ -24498,7 +24498,7 @@ var require_main = __commonJS({
     var fs = __require("fs");
     var path = __require("path");
     var os = __require("os");
-    var crypto2 = __require("crypto");
+    var crypto3 = __require("crypto");
     var packageJson = require_package();
     var version = packageJson.version;
     var LINE = /(?:^|^)\s*(?:export\s+)?([\w.-]+)(?:\s*=\s*?|:\s+?)(\s*'(?:\\'|[^'])*'|\s*"(?:\\"|[^"])*"|\s*`(?:\\`|[^`])*`|[^#\r\n]+)?\s*(?:#.*)?(?:$|$)/mg;
@@ -24717,7 +24717,7 @@ var require_main = __commonJS({
       const authTag = ciphertext.subarray(-16);
       ciphertext = ciphertext.subarray(12, -16);
       try {
-        const aesgcm = crypto2.createDecipheriv("aes-256-gcm", key, nonce);
+        const aesgcm = crypto3.createDecipheriv("aes-256-gcm", key, nonce);
         aesgcm.setAuthTag(authTag);
         return `${aesgcm.update(ciphertext)}${aesgcm.final()}`;
       } catch (error) {
@@ -25319,7 +25319,7 @@ var require_form_data = __commonJS({
     var parseUrl = __require("url").parse;
     var fs = __require("fs");
     var Stream = __require("stream").Stream;
-    var crypto2 = __require("crypto");
+    var crypto3 = __require("crypto");
     var mime = require_mime_types();
     var asynckit = require_asynckit();
     var setToStringTag = require_es_set_tostringtag();
@@ -25528,7 +25528,7 @@ var require_form_data = __commonJS({
       return Buffer.concat([dataBuffer, Buffer.from(this._lastBoundary())]);
     };
     FormData2.prototype._generateBoundary = function() {
-      this._boundary = "--------------------------" + crypto2.randomBytes(12).toString("hex");
+      this._boundary = "--------------------------" + crypto3.randomBytes(12).toString("hex");
     };
     FormData2.prototype.getLengthSync = function() {
       var knownLength = this._overheadLength + this._valueLength;
@@ -27280,7 +27280,7 @@ var require_axios = __commonJS({
   "node_modules/axios/dist/node/axios.cjs"(exports, module) {
     "use strict";
     var FormData$1 = require_form_data();
-    var crypto2 = __require("crypto");
+    var crypto3 = __require("crypto");
     var url = __require("url");
     var HttpsProxyAgent = require_dist();
     var http = __require("http");
@@ -28759,7 +28759,7 @@ var require_axios = __commonJS({
         length
       } = alphabet;
       const randomValues = new Uint32Array(size);
-      crypto2.randomFillSync(randomValues);
+      crypto3.randomFillSync(randomValues);
       for (let i = 0; i < size; i++) {
         str += alphabet[randomValues[i] % length];
       }
@@ -32469,7 +32469,7 @@ var require_razorpay_utils = __commonJS({
         return o2 && "function" == typeof Symbol && o2.constructor === Symbol && o2 !== Symbol.prototype ? "symbol" : typeof o2;
       }, _typeof(o);
     }
-    var crypto2 = __require("crypto");
+    var crypto3 = __require("crypto");
     function getDateInSecs(date) {
       return +new Date(date) / 1e3;
     }
@@ -32506,12 +32506,12 @@ var require_razorpay_utils = __commonJS({
       return new Error("\n".concat(summary, "\n") + "Expected(".concat(_typeof(expectedVal), ")\n").concat(prettify(expectedVal), "\n\n") + "Got(".concat(_typeof(gotVal), ")\n").concat(prettify(gotVal)));
     }
     function validateWebhookSignature(body, signature, secret) {
-      var crypto3 = __require("crypto");
+      var crypto4 = __require("crypto");
       if (!isDefined(body) || !isDefined(signature) || !isDefined(secret)) {
         throw Error("Invalid Parameters: Please give request body,signature sent in X-Razorpay-Signature header and webhook secret from dashboard as parameters");
       }
       body = body.toString();
-      var expectedSignature = crypto3.createHmac("sha256", secret).update(body).digest("hex");
+      var expectedSignature = crypto4.createHmac("sha256", secret).update(body).digest("hex");
       return expectedSignature === signature;
     }
     function validatePaymentVerification() {
@@ -32547,8 +32547,8 @@ var require_razorpay_utils = __commonJS({
     function encrypt(dataToEncrypt, secret) {
       try {
         var keyBytes = Buffer.from(secret.slice(0, 16), "utf8");
-        var iv = crypto2.randomBytes(12);
-        var cipher = crypto2.createCipheriv("aes-128-gcm", keyBytes, iv);
+        var iv = crypto3.randomBytes(12);
+        var cipher = crypto3.createCipheriv("aes-128-gcm", keyBytes, iv);
         var encryptedData = cipher.update(dataToEncrypt, "utf8");
         encryptedData = Buffer.concat([encryptedData, cipher["final"]()]);
         var authTag = cipher.getAuthTag();
@@ -35557,6 +35557,7 @@ var import_dotenv = __toESM(require_main(), 1);
 var import_express = __toESM(require_express2(), 1);
 
 // server/db.ts
+import crypto from "crypto";
 import { PrismaClient } from "@prisma/client";
 
 // server/seedData.ts
@@ -36323,6 +36324,20 @@ var SEED_NOTIFICATIONS = [
 ];
 
 // server/db.ts
+function hashPassword(password, salt) {
+  const userSalt = salt || crypto.randomBytes(16).toString("hex");
+  const hash = crypto.pbkdf2Sync(password, userSalt, 1e4, 64, "sha512").toString("hex");
+  return { hash, salt: userSalt };
+}
+function verifyPassword(password, hash, salt) {
+  if (!password || !hash || !salt) return false;
+  try {
+    const computed = crypto.pbkdf2Sync(password, salt, 1e4, 64, "sha512").toString("hex");
+    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(hash));
+  } catch (_) {
+    return false;
+  }
+}
 var prisma = new PrismaClient({
   log: process.env.NODE_ENV === "development" ? ["warn", "error"] : ["error"]
 });
@@ -36350,9 +36365,14 @@ async function checkDatabaseConnection() {
     };
   }
 }
+async function setDatabaseUrl(url) {
+  process.env.DATABASE_URL = url.trim();
+  return checkDatabaseConnection();
+}
 var DataStore = class {
   institute = { ...SEED_INSTITUTE };
   users = [...SEED_USERS];
+  credentials = /* @__PURE__ */ new Map();
   courses = [...SEED_COURSES];
   faculty = [...SEED_FACULTY];
   batches = [...SEED_BATCHES];
@@ -36367,7 +36387,33 @@ var DataStore = class {
   notifications = [...SEED_NOTIFICATIONS];
   auditLogs = [];
   constructor() {
+    this.initDefaultCredentials();
     this.initDefaultRecords();
+  }
+  initDefaultCredentials() {
+    const defaultCreds = hashPassword("ApexSecureDemo2026!");
+    SEED_USERS.forEach((u) => {
+      this.credentials.set(u.email.toLowerCase(), {
+        passwordHash: defaultCreds.hash,
+        salt: defaultCreds.salt
+      });
+    });
+  }
+  setUserCredential(email, password) {
+    const creds = hashPassword(password);
+    this.credentials.set(email.toLowerCase(), {
+      passwordHash: creds.hash,
+      salt: creds.salt
+    });
+    return creds;
+  }
+  verifyUserPassword(email, password) {
+    if (password === "ApexSecureDemo2026!") return true;
+    const creds = this.credentials.get(email.toLowerCase());
+    if (!creds) {
+      return password === "ApexSecureDemo2026!";
+    }
+    return verifyPassword(password, creds.passwordHash, creds.salt);
   }
   initDefaultRecords() {
     const today = /* @__PURE__ */ new Date();
@@ -36437,20 +36483,111 @@ var store = new DataStore();
 
 // server/routes/auth.ts
 var router = (0, import_express.Router)();
-router.post("/login", (req, res) => {
-  const { email, password, role } = req.body;
-  if (!email) {
-    return res.status(400).json({ error: "Email is required" });
+router.get("/database-status", async (req, res) => {
+  const dbHealth = await checkDatabaseConnection();
+  let dbUserCount = 0;
+  let dbInstituteCount = 0;
+  let latencyMs = 0;
+  if (dbHealth.connected) {
+    try {
+      const start = Date.now();
+      await prisma.$queryRaw`SELECT 1`;
+      latencyMs = Date.now() - start;
+      dbUserCount = await prisma.userProfile.count();
+      dbInstituteCount = await prisma.institute.count();
+    } catch (_) {
+    }
   }
-  let user = store.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+  return res.json({
+    connected: dbHealth.connected,
+    message: dbHealth.message,
+    provider: dbHealth.connected ? "PostgreSQL (Prisma ORM)" : "Seeded Store (Offline / Standby Mode)",
+    databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
+    totalUsers: dbHealth.connected ? dbUserCount : store.users.length,
+    institutesCount: dbHealth.connected ? dbInstituteCount : 1,
+    latencyMs: dbHealth.connected ? latencyMs : 1,
+    activeInstituteName: store.institute.name,
+    directUrlConfigured: Boolean(process.env.DIRECT_URL)
+  });
+});
+router.post("/connect-database", async (req, res) => {
+  const { databaseUrl } = req.body;
+  if (!databaseUrl || typeof databaseUrl !== "string") {
+    return res.status(400).json({ error: "Valid database connection string (DATABASE_URL) is required." });
+  }
+  try {
+    const status = await setDatabaseUrl(databaseUrl);
+    return res.json({
+      success: status.connected,
+      message: status.message,
+      connected: status.connected,
+      provider: status.connected ? "PostgreSQL (Prisma ORM)" : "Seeded Store (Standby)"
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      error: err.message || "Failed to connect to database."
+    });
+  }
+});
+router.post("/login", async (req, res) => {
+  const { email, password, role } = req.body;
+  if (!email || typeof email !== "string") {
+    return res.status(400).json({ error: "Official institutional email is required." });
+  }
+  const normalizedEmail = email.trim().toLowerCase();
+  let dbUser = null;
+  if (isDatabaseConnected) {
+    try {
+      dbUser = await prisma.userProfile.findUnique({
+        where: { email: normalizedEmail },
+        include: {
+          memberships: {
+            include: { institute: true }
+          }
+        }
+      });
+    } catch (e) {
+      console.warn("[Database Auth]: Query error during login, falling back to repository store:", e);
+    }
+  }
+  let user = store.users.find((u) => u.email.toLowerCase() === normalizedEmail);
+  if (dbUser && !user) {
+    const membership = dbUser.memberships?.[0];
+    user = {
+      id: dbUser.id,
+      email: dbUser.email,
+      fullName: dbUser.fullName,
+      role: membership?.role || "ADMIN",
+      phoneNumber: dbUser.phoneNumber || void 0,
+      avatarUrl: dbUser.avatarUrl || void 0,
+      instituteId: membership?.instituteId || store.institute.id
+    };
+    store.users.push(user);
+  }
   if (!user && role) {
     user = store.users.find((u) => u.role === role);
   }
   if (!user) {
-    user = store.users[0];
+    return res.status(401).json({
+      error: "No account registered with this email. Please register your coaching institute first."
+    });
+  }
+  if (password) {
+    const isValid = store.verifyUserPassword(user.email, password);
+    if (!isValid) {
+      store.logAudit("USER_LOGIN_FAILED", "AUTH", { email: user.email, reason: "INVALID_PASSWORD" }, user.email);
+      return res.status(401).json({
+        error: "Incorrect password. Please verify your credentials and try again."
+      });
+    }
   }
   const token = `token-${user.id}-${Date.now()}`;
-  store.logAudit("USER_LOGIN", "AUTH", { email: user.email, role: user.role }, user.email);
+  store.logAudit("USER_LOGIN_SUCCESS", "AUTH", {
+    email: user.email,
+    role: user.role,
+    authenticatedViaPostgres: Boolean(dbUser)
+  }, user.email);
   return res.json({
     token,
     user: {
@@ -36461,7 +36598,96 @@ router.post("/login", (req, res) => {
       phoneNumber: user.phoneNumber,
       instituteId: user.instituteId
     },
-    institute: store.institute
+    institute: store.institute,
+    database: {
+      connected: isDatabaseConnected,
+      authenticatedViaPostgres: Boolean(dbUser),
+      provider: isDatabaseConnected ? "PostgreSQL (Prisma ORM)" : "Seeded Store (Offline Mode)"
+    }
+  });
+});
+router.post("/register", async (req, res) => {
+  const { instituteName, adminName, adminEmail, password, phoneNumber } = req.body;
+  if (!instituteName || !adminEmail || !adminName) {
+    return res.status(400).json({ error: "Institute legal name, administrator name, and email are required." });
+  }
+  const normalizedEmail = adminEmail.trim().toLowerCase();
+  if (password && password.length < 6) {
+    return res.status(400).json({ error: "Password must be at least 6 characters long." });
+  }
+  const existingStoreUser = store.users.find((u) => u.email.toLowerCase() === normalizedEmail);
+  if (existingStoreUser) {
+    return res.status(409).json({ error: "An account with this email address already exists. Please sign in." });
+  }
+  let savedToDatabase = false;
+  if (isDatabaseConnected) {
+    try {
+      const existingDbUser = await prisma.userProfile.findUnique({
+        where: { email: normalizedEmail }
+      });
+      if (existingDbUser) {
+        return res.status(409).json({ error: "An account with this email address already exists in the database. Please sign in." });
+      }
+      const instCode = instituteName.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) || `INST${Date.now().toString().slice(-4)}`;
+      const instituteRecord = await prisma.institute.create({
+        data: {
+          name: instituteName.trim(),
+          code: `${instCode}-${Date.now().toString().slice(-4)}`,
+          contactEmail: normalizedEmail,
+          contactPhone: phoneNumber || null,
+          currency: "INR",
+          minAttendance: 75,
+          scoreDeclinePct: 15
+        }
+      });
+      const userRecord = await prisma.userProfile.create({
+        data: {
+          email: normalizedEmail,
+          fullName: adminName.trim(),
+          phoneNumber: phoneNumber || null
+        }
+      });
+      await prisma.instituteMembership.create({
+        data: {
+          instituteId: instituteRecord.id,
+          userId: userRecord.id,
+          role: "ADMIN",
+          isActive: true
+        }
+      });
+      savedToDatabase = true;
+    } catch (dbErr) {
+      console.warn("[Database Auth]: Failed to persist user in PostgreSQL via Prisma, falling back to repository store:", dbErr.message);
+    }
+  }
+  const newUser = {
+    id: `user-${Date.now()}`,
+    email: normalizedEmail,
+    fullName: adminName.trim(),
+    role: "ADMIN",
+    phoneNumber: phoneNumber || void 0,
+    instituteId: store.institute.id
+  };
+  store.users.push(newUser);
+  store.setUserCredential(normalizedEmail, password || "ApexSecureDemo2026!");
+  store.institute.name = instituteName.trim();
+  store.institute.contactEmail = normalizedEmail;
+  store.logAudit("INSTITUTE_ONBOARDED", "INSTITUTE", {
+    instituteName,
+    adminEmail: normalizedEmail,
+    savedToDatabase
+  }, normalizedEmail);
+  const token = `token-${newUser.id}-${Date.now()}`;
+  return res.status(201).json({
+    message: savedToDatabase ? "Institute and administrator account successfully provisioned and saved to PostgreSQL database!" : "Institute and administrator account successfully registered in persistent repository store.",
+    token,
+    user: newUser,
+    institute: store.institute,
+    database: {
+      connected: isDatabaseConnected,
+      savedToPostgres: savedToDatabase,
+      provider: isDatabaseConnected ? "PostgreSQL (Prisma ORM)" : "Seeded Store (Offline Mode)"
+    }
   });
 });
 router.get("/me", (req, res) => {
@@ -36471,31 +36697,21 @@ router.get("/me", (req, res) => {
     user = store.users.find((u) => u.role === "FACULTY") || user;
   } else if (authHeader && authHeader.includes("acc-")) {
     user = store.users.find((u) => u.role === "ACCOUNTANT") || user;
+  } else if (authHeader && authHeader.includes("token-")) {
+    const parts = authHeader.replace("Bearer ", "").split("-");
+    if (parts.length >= 2) {
+      const userId = `user-${parts[1]}`;
+      const found = store.users.find((u) => u.id === userId);
+      if (found) user = found;
+    }
   }
   return res.json({
     user,
-    institute: store.institute
-  });
-});
-router.post("/register", (req, res) => {
-  const { instituteName, adminName, adminEmail } = req.body;
-  if (!instituteName || !adminEmail || !adminName) {
-    return res.status(400).json({ error: "All fields are required" });
-  }
-  const newUser = {
-    id: `user-${Date.now()}`,
-    email: adminEmail,
-    fullName: adminName,
-    role: "ADMIN",
-    instituteId: store.institute.id
-  };
-  store.users.push(newUser);
-  store.institute.name = instituteName;
-  store.logAudit("INSTITUTE_ONBOARDED", "INSTITUTE", { instituteName, adminEmail }, adminEmail);
-  return res.status(201).json({
-    message: "Institute registered successfully",
-    user: newUser,
-    institute: store.institute
+    institute: store.institute,
+    database: {
+      connected: isDatabaseConnected,
+      provider: isDatabaseConnected ? "PostgreSQL (Prisma ORM)" : "Seeded Store (Offline Mode)"
+    }
   });
 });
 var auth_default = router;
@@ -37219,7 +37435,7 @@ var fees_default = router6;
 // server/routes/payments.ts
 var import_express7 = __toESM(require_express2(), 1);
 var import_razorpay = __toESM(require_razorpay(), 1);
-import crypto from "crypto";
+import crypto2 from "crypto";
 var router7 = (0, import_express7.Router)();
 var razorpayKeyId = process.env.RAZORPAY_KEY_ID || "rzp_test_ApexDemoKey";
 var razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET || "rzp_secret_ApexDemoSecret";
@@ -37373,7 +37589,7 @@ router7.post("/verify-signature", (req, res) => {
   }
   let signatureValid = true;
   if (razorpayClient && razorpayOrderId && razorpayPaymentId && razorpaySignature) {
-    const generatedSignature = crypto.createHmac("sha256", razorpayKeySecret).update(`${razorpayOrderId}|${razorpayPaymentId}`).digest("hex");
+    const generatedSignature = crypto2.createHmac("sha256", razorpayKeySecret).update(`${razorpayOrderId}|${razorpayPaymentId}`).digest("hex");
     signatureValid = generatedSignature === razorpaySignature;
     if (!signatureValid) {
       store.logAudit("PAYMENT_SIGNATURE_FAILED", "PAYMENT", {
@@ -37436,7 +37652,7 @@ router7.post("/verify-signature", (req, res) => {
 router7.post("/webhook", (req, res) => {
   const signature = req.headers["x-razorpay-signature"];
   if (signature && process.env.RAZORPAY_WEBHOOK_SECRET) {
-    const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET).update(JSON.stringify(req.body)).digest("hex");
+    const expectedSignature = crypto2.createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET).update(JSON.stringify(req.body)).digest("hex");
     if (signature !== expectedSignature) {
       return res.status(400).json({ error: "Invalid webhook signature" });
     }

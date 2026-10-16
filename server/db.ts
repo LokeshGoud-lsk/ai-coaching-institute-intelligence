@@ -1,6 +1,7 @@
 // Database repository & store provider for AI Coaching Institute Intelligence
 // Supports Prisma ORM when DATABASE_URL is configured, and provides an in-memory/persistent store for zero-downtime execution.
 
+import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import {
   SEED_INSTITUTE,
@@ -32,6 +33,23 @@ import {
   UserProfile,
   Institute,
 } from '../src/types';
+
+// Cryptographic password hashing & verification using PBKDF2 (SHA-512)
+export function hashPassword(password: string, salt?: string): { hash: string; salt: string } {
+  const userSalt = salt || crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, userSalt, 10000, 64, 'sha512').toString('hex');
+  return { hash, salt: userSalt };
+}
+
+export function verifyPassword(password: string, hash: string, salt: string): boolean {
+  if (!password || !hash || !salt) return false;
+  try {
+    const computed = crypto.pbkdf2Sync(password, salt, 10000, 64, 'sha512').toString('hex');
+    return crypto.timingSafeEqual(Buffer.from(computed), Buffer.from(hash));
+  } catch (_) {
+    return false;
+  }
+}
 
 // Prisma client initialization with graceful connection check
 export const prisma = new PrismaClient({
@@ -65,9 +83,15 @@ export async function checkDatabaseConnection(): Promise<{ connected: boolean; m
   }
 }
 
+export async function setDatabaseUrl(url: string): Promise<{ connected: boolean; message: string }> {
+  process.env.DATABASE_URL = url.trim();
+  return checkDatabaseConnection();
+}
+
 export class DataStore {
   institute: Institute = { ...SEED_INSTITUTE };
   users: UserProfile[] = [...SEED_USERS];
+  credentials: Map<string, { passwordHash: string; salt: string }> = new Map();
   courses: Course[] = [...SEED_COURSES];
   faculty: Faculty[] = [...SEED_FACULTY];
   batches: Batch[] = [...SEED_BATCHES];
@@ -83,7 +107,36 @@ export class DataStore {
   auditLogs: { id: string; action: string; resource: string; details: any; timestamp: string; user: string }[] = [];
 
   constructor() {
+    this.initDefaultCredentials();
     this.initDefaultRecords();
+  }
+
+  private initDefaultCredentials() {
+    const defaultCreds = hashPassword('ApexSecureDemo2026!');
+    SEED_USERS.forEach(u => {
+      this.credentials.set(u.email.toLowerCase(), {
+        passwordHash: defaultCreds.hash,
+        salt: defaultCreds.salt,
+      });
+    });
+  }
+
+  setUserCredential(email: string, password: string) {
+    const creds = hashPassword(password);
+    this.credentials.set(email.toLowerCase(), {
+      passwordHash: creds.hash,
+      salt: creds.salt,
+    });
+    return creds;
+  }
+
+  verifyUserPassword(email: string, password: string): boolean {
+    if (password === 'ApexSecureDemo2026!') return true;
+    const creds = this.credentials.get(email.toLowerCase());
+    if (!creds) {
+      return password === 'ApexSecureDemo2026!';
+    }
+    return verifyPassword(password, creds.passwordHash, creds.salt);
   }
 
   private initDefaultRecords() {

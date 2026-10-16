@@ -49,16 +49,60 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 
 export const api = {
   // Auth
-  login: (email: string, role?: string) =>
-    request<{ token: string; user: UserProfile; institute: Institute }>('/auth/login', {
+  login: (email: string, password?: string, role?: string) =>
+    request<{
+      token: string;
+      user: UserProfile;
+      institute: Institute;
+      database?: { connected: boolean; authenticatedViaPostgres: boolean; provider: string };
+    }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, role }),
+      body: JSON.stringify({ email, password, role }),
     }),
-  getMe: () => request<{ user: UserProfile; institute: Institute }>('/auth/me'),
-  register: (instituteName: string, adminName: string, adminEmail: string) =>
-    request<{ message: string; user: UserProfile; institute: Institute }>('/auth/register', {
+  getMe: () =>
+    request<{
+      user: UserProfile;
+      institute: Institute;
+      database?: { connected: boolean; provider: string };
+    }>('/auth/me'),
+  register: (data: {
+    instituteName: string;
+    adminName: string;
+    adminEmail: string;
+    password?: string;
+    phoneNumber?: string;
+  }) =>
+    request<{
+      message: string;
+      token: string;
+      user: UserProfile;
+      institute: Institute;
+      database?: { connected: boolean; savedToPostgres: boolean; provider: string };
+    }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ instituteName, adminName, adminEmail }),
+      body: JSON.stringify(data),
+    }),
+  getDatabaseStatus: () =>
+    request<{
+      connected: boolean;
+      message: string;
+      provider: string;
+      databaseUrlConfigured: boolean;
+      totalUsers: number;
+      institutesCount: number;
+      latencyMs: number;
+      activeInstituteName: string;
+      directUrlConfigured: boolean;
+    }>('/auth/database-status'),
+  connectDatabase: (databaseUrl: string) =>
+    request<{
+      success: boolean;
+      message: string;
+      connected: boolean;
+      provider: string;
+    }>('/auth/connect-database', {
+      method: 'POST',
+      body: JSON.stringify({ databaseUrl }),
     }),
 
   // Dashboard & Analytics
