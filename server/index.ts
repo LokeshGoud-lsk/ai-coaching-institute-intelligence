@@ -73,9 +73,9 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   });
 });
 
-// Start listener when executed directly
+// Start listener when executed directly (not in Vercel serverless)
 const PORT = process.env.PORT || 5005;
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+if (!process.env.VERCEL) {
   app.listen(PORT, async () => {
     console.log(`EduTrack API Server running on port ${PORT}`);
     console.log(`Base URL: http://localhost:${PORT}/api/v1`);
