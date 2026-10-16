@@ -1,3 +1,4 @@
+import { createRequire } from 'module'; const require = createRequire(import.meta.url);
 var __create = Object.create;
 var __defProp = Object.defineProperty;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -38868,7 +38869,7 @@ app.use((err, req, res, next) => {
   });
 });
 var PORT = process.env.PORT || 5005;
-if (!process.env.VERCEL) {
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
   app.listen(PORT, async () => {
     console.log(`EduTrack API Server running on port ${PORT}`);
     console.log(`Base URL: http://localhost:${PORT}/api/v1`);
@@ -38879,6 +38880,7 @@ if (!process.env.VERCEL) {
 var index_default = app;
 
 // server/vercelEntry.ts
+process.env.VERCEL = "1";
 function handler(req, res) {
   return index_default(req, res);
 }
