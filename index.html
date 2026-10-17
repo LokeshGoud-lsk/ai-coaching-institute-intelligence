@@ -2,7 +2,8 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AI Coaching Institute Performance & Fee Intelligence</title>
     <meta name="description" content="Next-generation AI-powered academic performance intelligence, explainable early warning system, and deterministic fee management for premier coaching institutes." />
@@ -15,6 +16,20 @@
     
     <!-- Razorpay Checkout SDK -->
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+    <!-- Single Page Apps for GitHub Pages SPA router redirect recovery -->
+    <script type="text/javascript">
+      (function(l) {
+        if (l.search[1] === '/' ) {
+          var decoded = l.search.slice(1).split('&').map(function(s) { 
+            return s.replace(/~and~/g, '&');
+          }).join('?');
+          window.history.replaceState(null, null,
+              l.pathname.slice(0, -1) + decoded + l.hash
+          );
+        }
+      }(window.location));
+    </script>
   </head>
   <body class="bg-background text-slate-100 min-h-screen antialiased selection:bg-brand-500 selection:text-white font-sans overflow-x-hidden">
     <div id="root"></div>

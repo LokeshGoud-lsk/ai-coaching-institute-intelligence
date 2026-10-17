@@ -17,7 +17,12 @@ import {
   AttendanceRecord
 } from '../types';
 
-const API_BASE = '/api/v1';
+// Support relative API paths on Vercel/localhost, and connect to live Vercel backend when hosted on static GitHub Pages
+const API_BASE = (import.meta as any).env?.VITE_API_URL || (
+  typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')
+    ? 'https://ai-coaching-institute-intelligence.vercel.app/api/v1'
+    : '/api/v1'
+);
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('edutrack_auth_token');

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Bell,
   Search,
@@ -111,8 +112,8 @@ export const Header: React.FC<HeaderProps> = ({
         </Button>
 
         {/* Notifications Icon */}
-        <a
-          href="/notifications"
+        <Link
+          to="/notifications"
           className="relative p-2 rounded-xl bg-slate-900 border border-white/10 hover:border-white/20 text-slate-300 hover:text-white transition-colors"
         >
           <Bell className="w-4 h-4" />
@@ -121,15 +122,15 @@ export const Header: React.FC<HeaderProps> = ({
               {unreadCount}
             </span>
           )}
-        </a>
+        </Link>
 
         {/* User Avatar */}
-        <a
-          href="/profile"
+        <Link
+          to="/profile"
           className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-700 flex items-center justify-center text-white font-bold text-xs border border-white/10 shadow-sm"
         >
           <User className="w-4 h-4" />
-        </a>
+        </Link>
       </div>
     </header>
   );

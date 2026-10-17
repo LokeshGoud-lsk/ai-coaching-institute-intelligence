@@ -26,7 +26,7 @@ import { ProfilePage } from './pages/ProfilePage';
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={(import.meta as any).env?.BASE_URL || '/'}>
       <Routes>
         {/* Public Marketing & Auth Routes */}
         <Route path="/" element={<LandingPage />} />
