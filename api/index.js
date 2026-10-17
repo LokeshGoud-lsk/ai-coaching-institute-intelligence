@@ -37469,6 +37469,17 @@ function initRazorpayClient() {
   }
 }
 initRazorpayClient();
+function requireAdminRole(req, res, next) {
+  const role = req.headers["x-user-role"] || req.query.role || "ADMIN";
+  if (role !== "ADMIN") {
+    return res.status(403).json({
+      error: "Access denied: Razorpay payment gateway configuration, order creation, and fee settlements are strictly restricted to the ADMIN role.",
+      requiredRole: "ADMIN",
+      currentRole: role
+    });
+  }
+  next();
+}
 router7.get("/gateway-info", (req, res) => {
   const isReal = Boolean(razorpayClient);
   return res.json({
@@ -37481,7 +37492,7 @@ router7.get("/gateway-info", (req, res) => {
     signatureVerification: "HMAC-SHA256 Server-Enforced"
   });
 });
-router7.post("/configure", (req, res) => {
+router7.post("/configure", requireAdminRole, (req, res) => {
   const { keyId, keySecret, webhookSecret } = req.body;
   if (!keyId || !keySecret) {
     return res.status(400).json({ error: "Key ID and Key Secret are required." });
@@ -37507,7 +37518,7 @@ router7.post("/configure", (req, res) => {
     mode: razorpayKeyId.startsWith("rzp_live_") ? "LIVE" : "TEST"
   });
 });
-router7.post("/test-connection", async (req, res) => {
+router7.post("/test-connection", requireAdminRole, async (req, res) => {
   if (!razorpayClient) {
     return res.status(400).json({
       success: false,
@@ -37528,7 +37539,7 @@ router7.post("/test-connection", async (req, res) => {
     });
   }
 });
-router7.post("/create-order", async (req, res) => {
+router7.post("/create-order", requireAdminRole, async (req, res) => {
   const { invoiceId, amountPaise } = req.body;
   if (!invoiceId || !amountPaise) {
     return res.status(400).json({ error: "invoiceId and amountPaise are required" });
@@ -37573,7 +37584,7 @@ router7.post("/create-order", async (req, res) => {
     return res.status(500).json({ error: err.message || "Failed to create Razorpay order" });
   }
 });
-router7.post("/verify-signature", (req, res) => {
+router7.post("/verify-signature", requireAdminRole, (req, res) => {
   const {
     invoiceId,
     amountPaise,

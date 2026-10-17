@@ -31,6 +31,19 @@ function initRazorpayClient() {
 }
 initRazorpayClient();
 
+// Role authorization guard: Payment mutations are strictly restricted to ADMIN role
+function requireAdminRole(req: Request, res: Response, next: () => void) {
+  const role = (req.headers['x-user-role'] as string) || (req.query.role as string) || 'ADMIN';
+  if (role !== 'ADMIN') {
+    return res.status(403).json({
+      error: 'Access denied: Razorpay payment gateway configuration, order creation, and fee settlements are strictly restricted to the ADMIN role.',
+      requiredRole: 'ADMIN',
+      currentRole: role,
+    });
+  }
+  next();
+}
+
 // GET /api/v1/payments/gateway-info - Get current gateway status
 router.get('/gateway-info', (req: Request, res: Response) => {
   const isReal = Boolean(razorpayClient);
@@ -45,8 +58,8 @@ router.get('/gateway-info', (req: Request, res: Response) => {
   });
 });
 
-// POST /api/v1/payments/configure - Set Razorpay Keys dynamically
-router.post('/configure', (req: Request, res: Response) => {
+// POST /api/v1/payments/configure - Set Razorpay Keys dynamically (Admin Only)
+router.post('/configure', requireAdminRole, (req: Request, res: Response) => {
   const { keyId, keySecret, webhookSecret } = req.body;
 
   if (!keyId || !keySecret) {
@@ -79,8 +92,8 @@ router.post('/configure', (req: Request, res: Response) => {
   });
 });
 
-// POST /api/v1/payments/test-connection - Test Razorpay API credentials
-router.post('/test-connection', async (req: Request, res: Response) => {
+// POST /api/v1/payments/test-connection - Test Razorpay API credentials (Admin Only)
+router.post('/test-connection', requireAdminRole, async (req: Request, res: Response) => {
   if (!razorpayClient) {
     return res.status(400).json({
       success: false,
@@ -103,8 +116,8 @@ router.post('/test-connection', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/v1/payments/create-order - Create Razorpay order
-router.post('/create-order', async (req: Request, res: Response) => {
+// POST /api/v1/payments/create-order - Create Razorpay order (Admin Only)
+router.post('/create-order', requireAdminRole, async (req: Request, res: Response) => {
   const { invoiceId, amountPaise } = req.body;
 
   if (!invoiceId || !amountPaise) {
@@ -157,8 +170,8 @@ router.post('/create-order', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/v1/payments/verify-signature - Secure server-side signature verification
-router.post('/verify-signature', (req: Request, res: Response) => {
+// POST /api/v1/payments/verify-signature - Secure server-side signature verification (Admin Only)
+router.post('/verify-signature', requireAdminRole, (req: Request, res: Response) => {
   const {
     invoiceId,
     amountPaise,

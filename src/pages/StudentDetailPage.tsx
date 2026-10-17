@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useOutletContext } from 'react-router-dom';
 import {
   User,
   Phone,
@@ -17,7 +17,7 @@ import {
   Download,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { Student, AttendanceRecord, Invoice, Payment } from '../types';
+import { Student, AttendanceRecord, Invoice, Payment, UserRole } from '../types';
 import { RiskBadge, AttendanceBadge, InvoiceStatusBadge } from '../components/common/Badge';
 import { Button } from '../components/common/Button';
 import { formatPaiseToINR } from '../lib/feeCalculations';
@@ -26,6 +26,8 @@ import { PaymentCheckoutModal } from '../components/payments/PaymentCheckoutModa
 
 export const StudentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const outletCtx = useOutletContext<{ currentRole?: UserRole }>() || {};
+  const currentRole: UserRole = outletCtx.currentRole || 'ADMIN';
   const [data, setData] = useState<{
     student: Student;
     attendance: AttendanceRecord[];
@@ -434,11 +436,12 @@ export const StudentDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Payment Checkout Modal */}
+      {/* Payment Checkout Modal (ONLY QR WITH TIME LIMIT, ADMIN ONLY) */}
       <PaymentCheckoutModal
         isOpen={Boolean(selectedInvoiceForPayment)}
         onClose={() => setSelectedInvoiceForPayment(null)}
         invoice={selectedInvoiceForPayment}
+        userRole={currentRole}
         onSuccess={() => {
           setSelectedInvoiceForPayment(null);
           if (id) {

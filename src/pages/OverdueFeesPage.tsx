@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 import {
   Clock,
   AlertTriangle,
@@ -10,7 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { Invoice } from '../types';
+import { Invoice, UserRole } from '../types';
 import { Button } from '../components/common/Button';
 import { StatCard } from '../components/common/StatCard';
 import { PaymentCheckoutModal } from '../components/payments/PaymentCheckoutModal';
@@ -18,6 +18,8 @@ import { formatPaiseToINR } from '../lib/feeCalculations';
 import { exportToCSV } from '../lib/utils';
 
 export const OverdueFeesPage: React.FC = () => {
+  const outletCtx = useOutletContext<{ currentRole?: UserRole }>() || {};
+  const currentRole: UserRole = outletCtx.currentRole || 'ADMIN';
   const [data, setData] = useState<{
     totalOverdueCount: number;
     totalOverduePaise: number;
@@ -221,11 +223,12 @@ export const OverdueFeesPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Razorpay Payment Checkout Modal */}
+      {/* Razorpay Payment Checkout Modal (ONLY QR WITH TIME LIMIT, ADMIN ONLY) */}
       <PaymentCheckoutModal
         isOpen={Boolean(selectedInvoiceForPayment)}
         onClose={() => setSelectedInvoiceForPayment(null)}
         invoice={selectedInvoiceForPayment}
+        userRole={currentRole}
         onSuccess={() => {
           setSelectedInvoiceForPayment(null);
           fetchData();

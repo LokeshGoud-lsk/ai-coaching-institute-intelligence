@@ -26,8 +26,18 @@ const API_BASE = (import.meta as any).env?.VITE_API_URL || (
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const token = localStorage.getItem('edutrack_auth_token');
+  const userStr = localStorage.getItem('edutrack_auth_user');
+  let currentRole = 'ADMIN';
+  if (userStr) {
+    try {
+      const parsed = JSON.parse(userStr);
+      if (parsed.role) currentRole = parsed.role;
+    } catch (_) {}
+  }
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'x-user-role': currentRole,
     ...(options.headers as Record<string, string>),
   };
 

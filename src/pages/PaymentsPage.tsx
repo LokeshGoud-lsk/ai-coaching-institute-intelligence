@@ -1,19 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import {
   CreditCard,
   Download,
   ShieldCheck,
+  ShieldAlert,
   Receipt,
   Plus,
+  QrCode,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { Payment, Invoice } from '../types';
+import { Payment, Invoice, UserRole } from '../types';
 import { Button } from '../components/common/Button';
 import { PaymentCheckoutModal } from '../components/payments/PaymentCheckoutModal';
 import { formatPaiseToINR } from '../lib/feeCalculations';
 import { generatePaymentReceiptPDF } from '../lib/pdfGenerator';
 
 export const PaymentsPage: React.FC = () => {
+  const outletCtx = useOutletContext<{ currentRole?: UserRole }>() || {};
+  const currentRole: UserRole = outletCtx.currentRole || 'ADMIN';
+  const isAdmin = currentRole === 'ADMIN';
+
   const [payments, setPayments] = useState<Payment[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,21 +84,51 @@ export const PaymentsPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs px-3 py-1.5 rounded-full bg-emerald-950/60 text-emerald-300 border border-emerald-500/30 font-semibold flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5" /> Razorpay Test Mode Ready
+          <span className={`text-xs px-3 py-1.5 rounded-full font-semibold flex items-center gap-1.5 ${
+            isAdmin
+              ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/30'
+              : 'bg-amber-950/60 text-amber-300 border border-amber-500/30'
+          }`}>
+            {isAdmin ? (
+              <>
+                <QrCode className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Razorpay UPI QR Ready (Admin Mode)</span>
+              </>
+            ) : (
+              <>
+                <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                <span>Read-Only Ledger (Role: {currentRole})</span>
+              </>
+            )}
           </span>
           {pendingInvoices.length > 0 && (
             <Button
               size="sm"
-              variant="gradient"
-              leftIcon={<Plus className="w-3.5 h-3.5" />}
+              variant={isAdmin ? 'gradient' : 'outline'}
+              disabled={!isAdmin}
+              leftIcon={<QrCode className="w-3.5 h-3.5" />}
               onClick={() => setSelectedInvoice(pendingInvoices[0])}
             >
-              Settle Fee via Razorpay
+              {isAdmin ? 'Settle Fee via Razorpay QR' : 'Settle Restricted (Admin Only)'}
             </Button>
           )}
         </div>
       </div>
+
+      {/* Admin Protected Notice Banner */}
+      {!isAdmin && (
+        <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-200 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
+            <span>
+              <strong>Admin Privilege Required:</strong> Razorpay Dynamic UPI QR code generation, fee collection, and financial ledger settlements are strictly restricted to users with the <strong className="text-white font-mono">ADMIN</strong> role.
+            </span>
+          </div>
+          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 font-mono text-amber-300">
+            CURRENT: {currentRole}
+          </span>
+        </div>
+      )}
 
       {/* Pending Invoices for Quick Collection */}
       {pendingInvoices.length > 0 && (
@@ -116,10 +153,12 @@ export const PaymentsPage: React.FC = () => {
                 </div>
                 <Button
                   size="sm"
-                  variant="gradient"
+                  variant={isAdmin ? 'gradient' : 'outline'}
+                  disabled={!isAdmin}
+                  leftIcon={<QrCode className="w-3.5 h-3.5" />}
                   onClick={() => handleOpenPayModal(inv)}
                 >
-                  Collect
+                  {isAdmin ? 'Collect QR' : 'Admin Only'}
                 </Button>
               </div>
             ))}
@@ -195,11 +234,12 @@ export const PaymentsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Razorpay Payment Checkout Modal */}
+      {/* Razorpay Payment Checkout Modal (ONLY QR WITH TIME LIMIT, ADMIN ONLY) */}
       <PaymentCheckoutModal
         isOpen={Boolean(selectedInvoice)}
         onClose={() => setSelectedInvoice(null)}
         invoice={selectedInvoice}
+        userRole={currentRole}
         onSuccess={() => {
           setSelectedInvoice(null);
           fetchData();

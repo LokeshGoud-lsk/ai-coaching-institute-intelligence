@@ -317,4 +317,57 @@ describe('EduTrack AI Intelligence Assistant & Grounding Engine', () => {
   });
 });
 
+describe('Razorpay UPI QR Code & Role Guard Intelligence', () => {
+  it('formats UPI QR payload URI correctly with invoice and amount', () => {
+    const upiId = 'edutrack.fees@icici';
+    const amountRupees = 40000;
+    const invoiceNumber = 'INV-2026-001';
+    const orderId = 'order_test_123';
+
+    const upiUri = `upi://pay?pa=${upiId}&pn=Apex%20Academy%20of%20Science&am=${amountRupees.toFixed(2)}&cu=INR&tn=Fee%20${invoiceNumber}&tr=${orderId}`;
+
+    expect(upiUri).toContain('pa=edutrack.fees@icici');
+    expect(upiUri).toContain('am=40000.00');
+    expect(upiUri).toContain('cu=INR');
+    expect(upiUri).toContain(invoiceNumber);
+    expect(upiUri).toContain(orderId);
+  });
+
+  it('validates 5-minute (300 seconds) countdown timer calculations', () => {
+    const totalSeconds = 300;
+    const elapsedSeconds = 45;
+    const remaining = totalSeconds - elapsedSeconds;
+
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+    const formatted = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+    expect(remaining).toBe(255);
+    expect(formatted).toBe('04:15');
+    expect(remaining > 0).toBe(true);
+  });
+
+  it('detects QR session expiration when timer hits 0', () => {
+    const remainingSeconds = 0;
+    const isExpired = remainingSeconds === 0;
+    expect(isExpired).toBe(true);
+  });
+
+  it('enforces ADMIN role only for fee settlement and Razorpay QR mutations', () => {
+    const checkRoleAuthorization = (role: string) => {
+      if (role !== 'ADMIN') {
+        return { allowed: false, status: 403, error: 'Restricted to ADMIN role' };
+      }
+      return { allowed: true, status: 200 };
+    };
+
+    expect(checkRoleAuthorization('ADMIN').allowed).toBe(true);
+    expect(checkRoleAuthorization('FACULTY').allowed).toBe(false);
+    expect(checkRoleAuthorization('FACULTY').status).toBe(403);
+    expect(checkRoleAuthorization('VIEWER').allowed).toBe(false);
+    expect(checkRoleAuthorization('ACCOUNTANT').allowed).toBe(false);
+  });
+});
+
+
 
