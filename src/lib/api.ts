@@ -239,12 +239,33 @@ export const api = {
       method: 'POST',
     }),
 
-  // AI Assistant (Gemini)
-  askAIChat: (message: string) =>
-    request<{ reply: string; isGrounded: boolean; source: string }>('/ai/chat', {
+  // AI Assistant (Google Gemini 3.8 Flash & Grounded Data Engine)
+  askAIChat: (
+    message: string,
+    conversationHistory?: { role: 'user' | 'assistant'; content: string }[],
+    studentId?: string
+  ) =>
+    request<{
+      reply: string;
+      isGrounded: boolean;
+      source: string;
+      evidence?: any[];
+      suggestions?: string[];
+      fallbackUsed?: boolean;
+      timestamp?: string;
+    }>('/ai/chat', {
       method: 'POST',
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, conversationHistory, studentId }),
     }),
+  getAIStatus: () =>
+    request<{
+      configured: boolean;
+      model: string;
+      provider: string;
+      status: string;
+    }>('/ai/status'),
+  getAISuggestions: () =>
+    request<{ suggestions: string[] }>('/ai/suggestions'),
   generateAIReport: (month?: string) =>
     request<any>('/ai/generate-report', {
       method: 'POST',
@@ -254,6 +275,30 @@ export const api = {
     request<{ recipient: string; studentName: string; subject: string; body: string; requiresHumanReview: boolean }>('/ai/draft-message', {
       method: 'POST',
       body: JSON.stringify({ studentId, type }),
+    }),
+  getStudentAIInsight: (studentId: string) =>
+    request<{
+      studentId: string;
+      studentName: string;
+      studentCode: string;
+      batchName: string;
+      diagnosis: string;
+      metrics: any;
+      recommendedInterventions: string[];
+      parentSummary: string;
+    }>('/ai/student-insight', {
+      method: 'POST',
+      body: JSON.stringify({ studentId }),
+    }),
+  summarizeAIDomain: (domain: 'academic' | 'attendance' | 'fees' | 'risk' | 'executive') =>
+    request<{ domain: string; summary: string; keyMetrics: any; evidence: any[]; timestamp: string }>('/ai/summarize', {
+      method: 'POST',
+      body: JSON.stringify({ domain }),
+    }),
+  configureAI: (payload: { apiKey?: string; model?: string }) =>
+    request<{ message: string; configured: boolean; model: string }>('/ai/configure', {
+      method: 'POST',
+      body: JSON.stringify(payload),
     }),
 
   // Batches & Faculty

@@ -4,6 +4,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { AIChatDrawer } from '../ai/AIChatDrawer';
 import { UserRole } from '../../types';
+import { Sparkles } from 'lucide-react';
 
 export const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -69,6 +70,16 @@ export const Layout: React.FC = () => {
           <Outlet context={{ currentRole: role }} />
         </main>
       </div>
+
+      {/* Floating Bottom-Right AI Assistant Button */}
+      <button
+        onClick={() => setIsAIChatOpen(true)}
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-brand-600 to-electric-cyan text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] hover:shadow-[0_0_28px_rgba(34,211,238,0.7)] hover:scale-105 active:scale-95 transition-all text-xs font-bold font-heading group"
+        title="Open EduTrack AI Intelligence Assistant"
+      >
+        <Sparkles className="w-4 h-4 text-yellow-300 group-hover:rotate-12 transition-transform" />
+        <span className="hidden sm:inline">Ask EduTrack AI</span>
+      </button>
 
       {/* Floating AI Chat Assistant Drawer */}
       <AIChatDrawer
