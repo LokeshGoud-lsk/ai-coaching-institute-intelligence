@@ -67,13 +67,30 @@ export const StudentDetailPage: React.FC = () => {
     }
   };
 
-  if (isLoading || !data) {
+  if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />
           <p className="text-xs text-slate-400">Loading comprehensive scholar dossier...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4 p-8 text-center bg-slate-900/40 border border-slate-800 rounded-2xl">
+        <AlertTriangle className="w-10 h-10 text-amber-400" />
+        <h3 className="text-lg font-bold text-white">Scholar Dossier Unavailable</h3>
+        <p className="text-xs text-slate-400 max-w-md">
+          Unable to locate the scholar dossier for this identifier. Return to directory to view active scholars.
+        </p>
+        <Link to="/students">
+          <Button variant="gradient" size="sm">
+            Back to Students Directory
+          </Button>
+        </Link>
       </div>
     );
   }

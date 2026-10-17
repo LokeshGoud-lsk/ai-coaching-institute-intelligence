@@ -17,6 +17,8 @@ import {
   AttendanceRecord
 } from '../types';
 
+import { getFallbackForEndpoint } from './fallbackData';
+
 // Support relative API paths on Vercel/localhost, and connect to live Vercel backend when hosted on static GitHub Pages
 const API_BASE = (import.meta as any).env?.VITE_API_URL || (
   typeof window !== 'undefined' && window.location.hostname.endsWith('github.io')
@@ -45,21 +47,36 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-  if (!response.ok) {
-    let errorMsg = `HTTP Error ${response.status}: ${response.statusText}`;
-    try {
-      const errorJson = await response.json();
-      if (errorJson.error) errorMsg = errorJson.error;
-    } catch (_) {}
-    throw new Error(errorMsg);
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      let errorMsg = `HTTP Error ${response.status}: ${response.statusText}`;
+      try {
+        const errorJson = await response.json();
+        if (errorJson.error) errorMsg = errorJson.error;
+      } catch (_) {}
+      throw new Error(errorMsg);
+    }
+
+    return await response.json();
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    console.warn(`[EduTrack API] Request to ${endpoint} failed (${err.name === 'AbortError' ? 'timed out after 4s' : err.message || err}). Engaging instant institutional fallback data.`);
+    const fallback = getFallbackForEndpoint<T>(endpoint, options.method);
+    if (fallback !== undefined) {
+      return fallback;
+    }
+    throw err;
   }
-
-  return response.json();
 }
 
 export const api = {

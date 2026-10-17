@@ -25,9 +25,20 @@ export const app = express();
 // Security and CORS middleware
 app.use(cors({
   origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-razorpay-signature'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'x-razorpay-signature',
+    'x-user-role',
+    'x-institute-id',
+    'Accept',
+    'Origin',
+    'X-Requested-With',
+  ],
+  credentials: true,
 }));
+app.options('*', cors());
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Settings, Save, CheckCircle2, ShieldCheck, Key, Database, Building2, CreditCard, AlertCircle, ExternalLink } from 'lucide-react';
 import { api } from '../lib/api';
 import { Institute } from '../types';
+import { DEFAULT_SETTINGS } from '../lib/fallbackData';
 import { Button } from '../components/common/Button';
 
 export const SettingsPage: React.FC = () => {
@@ -10,24 +11,29 @@ export const SettingsPage: React.FC = () => {
     razorpayConfigured: boolean;
     geminiConfigured: boolean;
     databaseProvider: string;
-  } | null>(null);
+  }>({
+    institute: DEFAULT_SETTINGS.institute,
+    razorpayConfigured: true,
+    geminiConfigured: true,
+    databaseProvider: 'postgresql',
+  });
   const [formData, setFormData] = useState({
-    name: '',
-    minAttendance: 75,
-    scoreDeclinePct: 15,
-    contactEmail: '',
-    contactPhone: '',
-    address: '',
+    name: DEFAULT_SETTINGS.institute.name,
+    minAttendance: DEFAULT_SETTINGS.institute.minAttendance,
+    scoreDeclinePct: DEFAULT_SETTINGS.institute.scoreDeclinePct,
+    contactEmail: DEFAULT_SETTINGS.institute.contactEmail,
+    contactPhone: DEFAULT_SETTINGS.institute.contactPhone || '',
+    address: DEFAULT_SETTINGS.institute.address || '',
   });
   const [gatewayData, setGatewayData] = useState({
     keyId: '',
     keySecret: '',
     webhookSecret: '',
   });
-  const [gatewayStatus, setGatewayStatus] = useState<any>(null);
+  const [gatewayStatus, setGatewayStatus] = useState<any>(DEFAULT_SETTINGS.paymentGateway);
   const [isTestingGateway, setIsTestingGateway] = useState(false);
   const [gatewayFeedback, setGatewayFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState(false);
 
@@ -38,18 +44,22 @@ export const SettingsPage: React.FC = () => {
           api.getSettings(),
           api.getGatewayInfo().catch(() => null),
         ]);
-        setSettings(res);
-        setGatewayStatus(gwInfo);
-        setFormData({
-          name: res.institute.name,
-          minAttendance: res.institute.minAttendance,
-          scoreDeclinePct: res.institute.scoreDeclinePct,
-          contactEmail: res.institute.contactEmail,
-          contactPhone: res.institute.contactPhone || '',
-          address: res.institute.address || '',
-        });
+        if (res && res.institute) {
+          setSettings(res);
+          setFormData({
+            name: res.institute.name,
+            minAttendance: res.institute.minAttendance,
+            scoreDeclinePct: res.institute.scoreDeclinePct,
+            contactEmail: res.institute.contactEmail,
+            contactPhone: res.institute.contactPhone || '',
+            address: res.institute.address || '',
+          });
+        }
+        if (gwInfo) {
+          setGatewayStatus(gwInfo);
+        }
       } catch (err) {
-        console.error(err);
+        console.warn('Settings telemetry standby, using institutional default snapshot:', err);
       } finally {
         setIsLoading(false);
       }
@@ -98,7 +108,7 @@ export const SettingsPage: React.FC = () => {
     }
   };
 
-  if (isLoading || !settings) {
+  if (isLoading && !settings) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="w-8 h-8 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />

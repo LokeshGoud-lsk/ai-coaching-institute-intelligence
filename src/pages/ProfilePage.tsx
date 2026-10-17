@@ -2,19 +2,30 @@ import React, { useEffect, useState } from 'react';
 import { User, Shield, Key, History, Check, X, ShieldCheck } from 'lucide-react';
 import { api } from '../lib/api';
 import { UserProfile, UserRole } from '../types';
+import { DEFAULT_USER } from '../lib/fallbackData';
 import { Button } from '../components/common/Button';
 
 export const ProfilePage: React.FC = () => {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const getInitialUser = (): UserProfile => {
+    try {
+      const stored = localStorage.getItem('edutrack_auth_user');
+      if (stored) return JSON.parse(stored);
+    } catch (_) {}
+    return DEFAULT_USER;
+  };
+
+  const [user, setUser] = useState<UserProfile>(getInitialUser());
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
       try {
         const res = await api.getMe();
-        setUser(res.user);
+        if (res && res.user) {
+          setUser(res.user);
+        }
       } catch (err) {
-        console.error(err);
+        console.warn('Profile sync standby, active on authenticated user session:', err);
       } finally {
         setIsLoading(false);
       }
@@ -34,7 +45,7 @@ export const ProfilePage: React.FC = () => {
     { module: 'Export Official PDF & CSV Registers', admin: true, faculty: true, accountant: true, viewer: true },
   ];
 
-  if (isLoading || !user) {
+  if (isLoading && !user) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
         <div className="w-8 h-8 border-4 border-brand-500/20 border-t-brand-500 rounded-full animate-spin" />

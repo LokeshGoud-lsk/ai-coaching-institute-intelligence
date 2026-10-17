@@ -39613,9 +39613,20 @@ import_dotenv2.default.config();
 var app = (0, import_express14.default)();
 app.use((0, import_cors.default)({
   origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "x-razorpay-signature"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-razorpay-signature",
+    "x-user-role",
+    "x-institute-id",
+    "Accept",
+    "Origin",
+    "X-Requested-With"
+  ],
+  credentials: true
 }));
+app.options("*", (0, import_cors.default)());
 app.use(import_express14.default.json({ limit: "10mb" }));
 app.use(import_express14.default.urlencoded({ extended: true }));
 app.get("/api/health", async (req, res) => {
